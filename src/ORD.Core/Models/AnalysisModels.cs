@@ -5,7 +5,9 @@ public static class NightmareCriteria
     // === 악몽 물딜 합격 기준선 ===
     public const int MinPhysicalArmorReduction = 165;    // 최소 방깎 (이 이하면 라인사 위험 급증)
     public const int SafePhysicalArmorReduction = 185;   // 안정권 풀방깎
-    public const int TargetPhysicalSlow = 110;           // 필수 이감 110% (캡 도달)
+    public const int OvercapPhysicalArmor = 200;         // 초과 방깎 (이 이상은 방깎보다 이감/스턴이 우선)
+    public const int TargetPhysicalSlow = 110;           // 필수 이감 110%
+    public const int TargetPhysicalSlowCap = 117;        // 안정권 이감 캡 (117%+)
     public const double MinPhysicalStun = 2.0;           // 필수 2스턴
     public const double MaxPhysicalStun = 2.5;           // 스턴 과투자 방지 상한선
 

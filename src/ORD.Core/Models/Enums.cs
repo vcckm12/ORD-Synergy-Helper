@@ -22,5 +22,6 @@ public enum UnitTier
     Transcendence = 9,  // 초월함
     Immortal = 10,      // 불멸함
     Eternal = 11,       // 영원함
-    RandomExclusive = 12 // 랜디/기타
+    RandomExclusive = 12, // 랜디/기타
+    Gorosei = 13        // 오로성
 }

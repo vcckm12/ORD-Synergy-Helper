@@ -41,6 +41,53 @@ var deck2 = new List<OrdUnit>
 
 PrintAnalysisAndRecommendations(deck2, evaluator, recommender);
 
+Console.WriteLine("\n-------------------------------------------------------------\n");
+
+// -------------------------------------------------------------
+// [시나리오 3: 유저 질문 상황 - 211깎, 이감 102% (오로성 선택 직전)]
+// -------------------------------------------------------------
+Console.WriteLine(">>> [시나리오 3] 유저 질문 케이스: 211깎 / 이감 102% 상태에서 오로성 선택 분석");
+Console.WriteLine("    - 나스쥬로 선택 시: 이감 102% -> 117% (이감 +15%)");
+Console.WriteLine("    - 워큐리 선택 시  : 방깎 211깎 -> 226깎 (방깎 +15)\n");
+
+var deck3 = new List<OrdUnit>
+{
+    new OrdUnit
+    {
+        Id = "current_deck_core",
+        Name = "루피 초월 + 풀물딜 덱",
+        Tier = UnitTier.Transcendence,
+        PrimaryDamageType = DamageType.Physical,
+        Synergy = new UnitSynergy
+        {
+            ArmorReduction = 211,
+            MovementSlow = 102,
+            StunValue = 2.0,
+            HasAttackBuff = true
+        }
+    }
+};
+
+PrintAnalysisAndRecommendations(deck3, evaluator, recommender);
+
+var analysis3 = evaluator.Evaluate(deck3);
+var allRecs = recommender.RecommendNextBuilds(analysis3, deck3, 15);
+var nusjuroRec = allRecs.FirstOrDefault(r => r.TargetUnit.Id == "gorosei_nusjuro");
+var warcuryRec = allRecs.FirstOrDefault(r => r.TargetUnit.Id == "gorosei_warcury");
+
+Console.WriteLine("\n[4] ★ [오로성 선택 직관 비교]:");
+if (nusjuroRec != null)
+{
+    Console.WriteLine($"   * [추천 승리] {nusjuroRec.TargetUnit.Name} -> 추천점수: {nusjuroRec.RecommendationScore:F0}점 ({nusjuroRec.CoreReason})");
+    Console.WriteLine($"     => 결과: 이감 102% + 15% = 117% (악몽 안정권 캡 완벽 도달, 몹 완전 고정!)");
+}
+if (warcuryRec != null)
+{
+    Console.WriteLine($"   * [비추천]   {warcuryRec.TargetUnit.Name} -> 추천점수: {warcuryRec.RecommendationScore:F0}점 ({warcuryRec.CoreReason})");
+    Console.WriteLine($"     => 결과: 방깎 211깎 + 15깎 = 226깎 (이미 200깎 초과 상태라 딜 체감 미미, 이감 102% 유지되어 누수 위험)");
+}
+
+
 void PrintAnalysisAndRecommendations(List<OrdUnit> deck, SynergyEvaluator eval, BuildRecommender rec)
 {
     var analysis = eval.Evaluate(deck);

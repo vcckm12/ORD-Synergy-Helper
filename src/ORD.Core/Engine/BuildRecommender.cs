@@ -17,7 +17,7 @@ public class BuildRecommender
         var existingIds = currentDeck.Select(u => u.Id).ToHashSet();
         var candidates = _repository.GetAll()
             .Where(u => !existingIds.Contains(u.Id)) // 이미 보유한 유닛 제외
-            .Where(u => u.Tier >= UnitTier.Hidden && u.Tier <= UnitTier.Legendary) // 추천 대상은 주로 조합 목표인 전설/히든/변이
+            .Where(u => (u.Tier >= UnitTier.Hidden && u.Tier <= UnitTier.Legendary) || u.Tier == UnitTier.Gorosei)
             .ToList();
 
         var recommendations = new List<RecommendationItem>();
@@ -55,21 +55,42 @@ public class BuildRecommender
             int totalCut = candidate.Synergy.ArmorReduction + candidate.Synergy.ArmorBreakOverlap;
             if (totalCut > 0)
             {
-                int missingCut = Math.Max(0, NightmareCriteria.SafePhysicalArmorReduction - analysis.TotalArmorReduction);
-                if (missingCut > 0)
+                int currentCut = analysis.TotalArmorReduction;
+                if (currentCut < NightmareCriteria.SafePhysicalArmorReduction)
                 {
                     score += Math.Min(35, totalCut * 0.9);
                     reasons.Add($"방깎 +{totalCut} 보완");
                     solvedDeficits.Add("방깎");
                 }
+                else if (currentCut < NightmareCriteria.OvercapPhysicalArmor)
+                {
+                    score += Math.Min(15, totalCut * 0.4);
+                    reasons.Add($"방깎 +{totalCut} (초과 방깎 대비)");
+                }
+                else
+                {
+                    // 200깎 이상 초과 상태에서는 한계효용 감쇠
+                    score += Math.Min(5, totalCut * 0.1);
+                    reasons.Add($"방깎 +{totalCut} (이미 200깎 초과로 한계효용 낮음)");
+                }
             }
 
             // 2. 이감 기여도 평가
-            if (candidate.Synergy.MovementSlow > 0 && analysis.TotalSlow < NightmareCriteria.TargetPhysicalSlow)
+            if (candidate.Synergy.MovementSlow > 0)
             {
-                score += Math.Min(25, candidate.Synergy.MovementSlow * 0.7);
-                reasons.Add($"이감 +{candidate.Synergy.MovementSlow}% 보완");
-                solvedDeficits.Add("이감");
+                if (analysis.TotalSlow < NightmareCriteria.TargetPhysicalSlow)
+                {
+                    score += Math.Min(35, candidate.Synergy.MovementSlow * 1.5);
+                    reasons.Add($"이감 +{candidate.Synergy.MovementSlow}% (누수 위험 해소)");
+                    solvedDeficits.Add("이감");
+                }
+                else if (analysis.TotalSlow < NightmareCriteria.TargetPhysicalSlowCap)
+                {
+                    // 102% -> 117% 등 안정권 풀캡 달성
+                    score += Math.Min(45, candidate.Synergy.MovementSlow * 2.5);
+                    reasons.Add($"이감 +{candidate.Synergy.MovementSlow}% (★악몽 안정권 117% 캡 완성)");
+                    solvedDeficits.Add("이감 캡 완성");
+                }
             }
 
             // 3. 스턴 기여도 평가

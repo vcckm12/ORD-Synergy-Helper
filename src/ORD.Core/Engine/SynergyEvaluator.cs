@@ -66,13 +66,23 @@ public class SynergyEvaluator
                 deficits.Add($"[경고] 방깎 보완 권장: 현재 {totalEffectiveArmorCut}깎 (185 풀방깎까지 {NightmareCriteria.SafePhysicalArmorReduction - totalEffectiveArmorCut}깎 남음)");
                 score -= 10;
             }
+            else if (totalEffectiveArmorCut >= NightmareCriteria.OvercapPhysicalArmor)
+            {
+                deficits.Add($"[초과 달성] 방깎 {totalEffectiveArmorCut}깎: 악몽 185 풀방깎을 초과했습니다. 추가 방깎은 한계 효용이 낮으므로 '이감 117% 캡'과 '스턴 홀딩' 완성이 절대적으로 우선됩니다.");
+            }
 
             // [물딜 2순위: 이감]
             if (result.TotalSlow < NightmareCriteria.TargetPhysicalSlow)
             {
                 int missingSlow = NightmareCriteria.TargetPhysicalSlow - result.TotalSlow;
-                deficits.Add($"[이감 부족] 현재 {result.TotalSlow}% (목표 110% 대비 {missingSlow}% 부족)");
-                score -= Math.Min(25, missingSlow * 0.3);
+                deficits.Add($"[이감 위험] 현재 {result.TotalSlow}% (최소 기준 110% 대비 {missingSlow}% 부족, 라인 몹 누수 위험)");
+                score -= Math.Min(30, missingSlow * 0.4);
+            }
+            else if (result.TotalSlow < NightmareCriteria.TargetPhysicalSlowCap)
+            {
+                int missingSlow = NightmareCriteria.TargetPhysicalSlowCap - result.TotalSlow;
+                deficits.Add($"[이감 보강 권장] 현재 {result.TotalSlow}% (완전 안정 캡 117%까지 {missingSlow}% 부족, 몹 뭉침 극대화 필요)");
+                score -= 5;
             }
 
             // [물딜 3순위: 스턴]

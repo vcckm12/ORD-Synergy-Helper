@@ -168,5 +168,35 @@ public class UnitRepository
             PrimaryDamageType = DamageType.Hybrid,
             Synergy = new UnitSynergy { HasBossKiller = true, ArmorReduction = 12, MovementSlow = 0 }
         });
+
+        // ==========================================
+        // [오로성 - 특수 서포터]
+        // ==========================================
+        Add(new OrdUnit
+        {
+            Id = "gorosei_warcury",
+            Name = "오로성 워큐리",
+            Tier = UnitTier.Gorosei,
+            PrimaryDamageType = DamageType.Physical,
+            Synergy = new UnitSynergy { ArmorReduction = 15 }
+        });
+
+        Add(new OrdUnit
+        {
+            Id = "gorosei_nusjuro",
+            Name = "오로성 나스쥬로",
+            Tier = UnitTier.Gorosei,
+            PrimaryDamageType = DamageType.Support,
+            Synergy = new UnitSynergy { MovementSlow = 15 }
+        });
+
+        Add(new OrdUnit
+        {
+            Id = "gorosei_saturn",
+            Name = "오로성 새턴",
+            Tier = UnitTier.Gorosei,
+            PrimaryDamageType = DamageType.Support,
+            Synergy = new UnitSynergy { StunValue = 0.5 }
+        });
     }
 }
