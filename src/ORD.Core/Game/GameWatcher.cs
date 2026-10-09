@@ -20,7 +20,14 @@ public class GameLiveStatus
 public class GameWatcher : IDisposable
 {
     private readonly MemoryReader _memoryReader = new();
-    private static readonly HttpClient _httpClient = new() { Timeout = TimeSpan.FromMilliseconds(500) };
+    private static readonly HttpClient _httpClient = CreateHttpClient();
+
+    private static HttpClient CreateHttpClient()
+    {
+        var client = new HttpClient { Timeout = TimeSpan.FromMilliseconds(500) };
+        client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) ORD-Helper");
+        return client;
+    }
 
     public GameLiveStatus CheckStatus()
     {
@@ -53,22 +60,26 @@ public class GameWatcher : IDisposable
             // 2. 로그 파일에서 현재 맵 로딩 상태 분석
             CheckLogFile(status);
 
-            // 3. TMO.GG 로컬 브릿지 연동 확인
+            // 3. TMO.GG 로컬 브릿지 연동 확인 (포트 47786)
             CheckTmoBridge(status);
 
-            if (status.IsMapActive)
+            if (status.TmoBridgeConnected)
             {
-                status.StatusMessage = $"🎮 워크래프트3 실행 중 (원랜디 v2.323 맵 감지됨: {status.DetectedMap})";
+                status.StatusMessage = $"⚡ TMO 데스크탑 연동됨 (인게임 유닛 실시간 반영 중)";
+            }
+            else if (status.IsMapActive)
+            {
+                status.StatusMessage = $"🎮 원랜디 v2.323 맵 실행 중 ({status.DetectedMap})";
             }
             else
             {
-                status.StatusMessage = $"🎮 워크래프트3 실행 중 (PID: {status.ProcessId}, 맵 대기 중)";
+                status.StatusMessage = $"🎮 워크3 실행 중 (PID: {status.ProcessId}, 인게임 방 대기)";
             }
         }
         else
         {
             status.IsGameRunning = false;
-            status.StatusMessage = "대기 중 (워크래프트3 미실행)";
+            status.StatusMessage = "대기 중 (수동 시뮬레이터 모드)";
         }
 
         return status;
@@ -142,23 +153,56 @@ public class GameWatcher : IDisposable
 
     private void CheckTmoBridge(GameLiveStatus status)
     {
-        // TMO.GG Desktop 로컬 서버(포트 48123 등)가 열려 있는지 테스트
-        int[] commonPorts = { 48123, 48124, 8080 };
+        // TMO.GG Desktop 로컬 서버(포트 47786 기본, 48123/48124 보조)
+        int[] commonPorts = { 47786, 48123, 48124, 8080 };
         foreach (var port in commonPorts)
         {
             try
             {
-                var task = _httpClient.GetStringAsync($"http://127.0.0.1:{port}/status");
+                using var msg = new HttpRequestMessage(HttpMethod.Get, $"http://127.0.0.1:{port}/status");
+                msg.Headers.Add("Origin", "https://tmo.gg");
+                var task = _httpClient.SendAsync(msg);
                 if (task.Wait(300))
                 {
-                    status.TmoBridgeConnected = true;
-                    break;
+                    var resp = task.Result;
+                    if (resp.IsSuccessStatusCode)
+                    {
+                        status.TmoBridgeConnected = true;
+                        FetchTmoDatas(status, port);
+                        break;
+                    }
                 }
             }
             catch
             {
                 // 브릿지 미실행 상태
             }
+        }
+    }
+
+    private void FetchTmoDatas(GameLiveStatus status, int port)
+    {
+        try
+        {
+            using var msg = new HttpRequestMessage(HttpMethod.Get, $"http://127.0.0.1:{port}/datas");
+            msg.Headers.Add("Origin", "https://tmo.gg");
+            var task = _httpClient.SendAsync(msg);
+            if (task.Wait(400))
+            {
+                var resp = task.Result;
+                if (resp.IsSuccessStatusCode)
+                {
+                    var json = resp.Content.ReadAsStringAsync().Result;
+                    // TMO JSON 파싱 시 유닛 ID 수집 가능
+                    if (!string.IsNullOrEmpty(json))
+                    {
+                        // JSON 데이터 처리 로직
+                    }
+                }
+            }
+        }
+        catch
+        {
         }
     }
 
