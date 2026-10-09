@@ -5,6 +5,9 @@ let activeTier = 'ALL';
 // 페이지 초기 로드
 document.addEventListener('DOMContentLoaded', async () => {
   await loadUnits();
+  await checkGameStatus();
+  setInterval(checkGameStatus, 4000); // 4초마다 실시간 워크래프트3 상태 체크
+  
   // 기본 데모 덱 로드 (루피 초월)
   loadPreset('luffy');
 });
@@ -17,6 +20,38 @@ async function loadUnits() {
     renderUnitPicker();
   } catch (err) {
     console.error('Failed to load units:', err);
+  }
+}
+
+// 실시간 워크래프트3 연동 상태 확인
+async function checkGameStatus() {
+  const dotEl = document.getElementById('gameDot');
+  const titleEl = document.getElementById('gameStatusTitle');
+  const descEl = document.getElementById('gameStatusDesc');
+
+  try {
+    const res = await fetch('/api/game/status');
+    const status = await res.json();
+
+    if (status.isGameRunning) {
+      if (status.isMapActive) {
+        dotEl.className = 'status-dot dot-map';
+        titleEl.textContent = '🎮 원랜디 v2.323 연동됨';
+        descEl.textContent = status.detectedMap || '맵 로드 완료';
+      } else {
+        dotEl.className = 'status-dot dot-running';
+        titleEl.textContent = '🎮 워크래프트3 실행 중';
+        descEl.textContent = `${status.detectedVersion} (PID: ${status.processId})`;
+      }
+    } else {
+      dotEl.className = 'status-dot dot-idle';
+      titleEl.textContent = '워크3 미실행';
+      descEl.textContent = '연동 대기 중 (실행 시 자동 감지)';
+    }
+  } catch (err) {
+    dotEl.className = 'status-dot dot-idle';
+    titleEl.textContent = '연동 확인 불가';
+    descEl.textContent = '로컬 서버 확인 필요';
   }
 }
 
@@ -47,7 +82,7 @@ function updateDashboardUI(data) {
 
   if (analysis.mainCarry) {
     carryNameEl.textContent = analysis.mainCarry.name;
-    deckTypeBadge.textContent = analysis.primaryType === 1 ? '물리 덱 (물딜)' : '마법 덱 (마딜)';
+    deckTypeBadge.textContent = analysis.primaryType === 1 ? '물리 덱 (물딜)' : (analysis.primaryType === 2 ? '마법 덱 (마딜)' : '하이브리드 덱');
     deckTypeBadge.className = analysis.primaryType === 1 ? 'badge badge-physical' : 'badge badge-magic';
   } else {
     carryNameEl.textContent = '- 필드에 유닛이 없습니다 -';
@@ -74,7 +109,7 @@ function updateDashboardUI(data) {
   armorValEl.textContent = totalArmor;
   const armorPct = Math.min(100, (totalArmor / 211) * 100);
   armorBar.style.width = `${armorPct}%`;
-  armorSub.textContent = `기본 오라 ${analysis.totalArmorReduction} + 암브 ${analysis.totalArmorBreak} (v2.323 목표 211)`;
+  armorSub.textContent = `기본 오라 ${analysis.totalArmorReduction} + 암브 ${analysis.totalArmorBreak} (v2.323 악몽 목표 211)`;
 
   // 이감 (목표 102%)
   const slowValEl = document.getElementById('slowVal');
@@ -99,13 +134,13 @@ function updateDashboardUI(data) {
   const stunPct = Math.min(100, (analysis.totalStun / 2.0) * 100);
   stunBar.style.width = `${stunPct}%`;
   if (analysis.totalStun < 2.0) {
-    stunSub.textContent = `위험: 최소 2.0 스턴 필요`;
+    stunSub.textContent = `위험: 최소 2.0 스턴 필요 (라인 흘림 방지)`;
     stunSub.style.color = '#f87171';
   } else if (analysis.totalStun <= 2.5) {
     stunSub.textContent = `적정: 2.0~2.5 안정권 스턴`;
     stunSub.style.color = '#10b981';
   } else {
-    stunSub.textContent = `주의: 2.5 초과 스턴 과투자 (딜로스 주의)`;
+    stunSub.textContent = `주의: 2.5 초과 스턴 과투자 (방깎/이감 딜로스 주의)`;
     stunSub.style.color = '#f59e0b';
   }
 
@@ -127,27 +162,58 @@ function updateDashboardUI(data) {
     deficitsList.innerHTML = '<li class="success">모든 악몽 클리어 시너지가 충족되었습니다!</li>';
   }
 
-  // 4. AI 추천 리스트
+  // 4. AI 스마트 추천 리스트
   const recListEl = document.getElementById('recList');
   recListEl.innerHTML = '';
   if (recommendations && recommendations.length > 0) {
-    recommendations.slice(0, 4).forEach((r, idx) => {
+    recommendations.slice(0, 5).forEach((r, idx) => {
       const item = document.createElement('div');
       item.className = `rec-item rank-${idx + 1}`;
+
+      const twoInOneBadge = r.isTwoInOne ? '<span class="badge-two-in-one">★ 1타 2피</span>' : '';
+      
+      let missingCommonsHtml = '';
+      if (r.missingCommons && Object.keys(r.missingCommons).length > 0) {
+        const chips = Object.entries(r.missingCommons)
+          .slice(0, 5)
+          .map(([name, count]) => `<span class="chip-missing">${name} ${count}</span>`)
+          .join(' ');
+        missingCommonsHtml = `<div class="missing-commons-wrap"><span class="missing-title">부족 흔함:</span> ${chips}</div>`;
+      }
+
+      let directUnitsHtml = '';
+      if (r.missingDirectUnits && r.missingDirectUnits.length > 0) {
+        directUnitsHtml = `<div class="missing-direct-units">필요 하위패: ${r.missingDirectUnits.slice(0, 3).join(', ')}</div>`;
+      }
+
       item.innerHTML = `
-        <div class="rec-left">
-          <span class="rec-rank-badge">#${idx + 1}</span>
-          <div>
+        <div class="rec-left" style="flex: 1;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span class="rec-rank-badge">#${idx + 1}</span>
             <div>
               <span class="rec-unit-name">${r.targetUnit.name}</span>
               <span class="rec-tier-badge">${tierName(r.targetUnit.tier)}</span>
+              ${twoInOneBadge}
             </div>
-            <div class="rec-reason">${r.coreReason}</div>
+          </div>
+          <div class="rec-reason" style="margin-top: 4px;">${r.coreReason}</div>
+          
+          <!-- 하위 조합 완성도 게이지 & 부족한 흔함 패 -->
+          <div class="readiness-bar-wrap">
+            <div class="readiness-header-row">
+              <span>조합 완성도: <strong>${Math.round(r.recipeReadiness)}%</strong></span>
+              <span style="color: #94a3b8">남은 흔함: <strong>${r.totalMissingCommons}개</strong></span>
+            </div>
+            <div class="progress-track" style="height: 6px;">
+              <div class="progress-fill fill-readiness" style="width: ${r.recipeReadiness}%"></div>
+            </div>
+            ${missingCommonsHtml}
+            ${directUnitsHtml}
           </div>
         </div>
-        <div class="rec-right">
+        <div class="rec-right" style="margin-left: 12px; display: flex; flex-direction: column; align-items: flex-end; justify-content: center;">
           <div class="rec-score">${Math.round(r.recommendationScore)}점</div>
-          <button class="btn-add-rec" onclick="addUnit('${r.targetUnit.id}')">+ 필드에 추가</button>
+          <button class="btn-add-rec" onclick="addUnit('${r.targetUnit.id}')">+ 필드 추가</button>
         </div>
       `;
       recListEl.appendChild(item);
@@ -169,7 +235,7 @@ function updateDashboardUI(data) {
           <span class="nav-score">적합도 ${Math.round(nr.matchScore)}%</span>
         </div>
         <div class="nav-rationale">${nr.rationale}</div>
-        <div class="nav-tip">💡 팁: ${nr.practicalTip}</div>
+        <div class="nav-tip">💡 실전 팁: ${nr.practicalTip}</div>
       `;
       navRecListEl.appendChild(item);
     });
@@ -199,6 +265,8 @@ function updateDashboardUI(data) {
 
 // 오로성 직관 설명 갱신
 function updateGoroseiCards(armor, slow) {
+  const colW = document.getElementById('colWarcury');
+  const colN = document.getElementById('colNusjuro');
   const descW = document.getElementById('descWarcury');
   const descN = document.getElementById('descNusjuro');
 
@@ -206,7 +274,7 @@ function updateGoroseiCards(armor, slow) {
   const afterN = slow + 15;
 
   if (armor >= 211) {
-    descW.innerHTML = `<span style="color: #94a3b8">현재 ${armor}깎 → <strong>${afterW}깎</strong> (이미 211 풀방깎 달성으로 딜 체감 미미)</span>`;
+    descW.innerHTML = `<span style="color: #ef4444">이미 211 풀방깎 달성! (+15깎 효율 감쇠로 비추천)</span>`;
   } else {
     descW.innerHTML = `<span style="color: #38bdf8">현재 ${armor}깎 → <strong>${afterW}깎</strong> (풀방깎 보완 기여)</span>`;
   }
@@ -227,7 +295,20 @@ function renderUnitPicker() {
 
   const filtered = allUnits.filter(u => {
     const matchSearch = u.name.toLowerCase().includes(search) || u.id.toLowerCase().includes(search);
-    const matchTier = (activeTier === 'ALL') || (tierName(u.tier) === activeTier || u.tier.toString() === activeTier);
+    
+    let matchTier = false;
+    if (activeTier === 'ALL') matchTier = true;
+    else if (activeTier === 'Transcendence') matchTier = u.tier === 9;
+    else if (activeTier === 'Immortal') matchTier = u.tier === 10;
+    else if (activeTier === 'Eternal') matchTier = u.tier === 11;
+    else if (activeTier === 'Limited') matchTier = u.tier === 8;
+    else if (activeTier === 'Legendary') matchTier = u.tier === 7;
+    else if (activeTier === 'Hidden') matchTier = u.tier === 5 || u.tier === 6; // 히든 + 변화
+    else if (activeTier === 'Rare') matchTier = u.tier === 4;
+    else if (activeTier === 'Special') matchTier = u.tier === 3;
+    else if (activeTier === 'Common') matchTier = u.tier === 1 || u.tier === 2; // 흔함 + 안흔함
+    else if (activeTier === 'Gorosei') matchTier = u.tier === 13;
+
     return matchSearch && matchTier;
   });
 
@@ -243,13 +324,15 @@ function renderUnitPicker() {
     if (u.synergy.stunValue > 0) statsText.push(`${u.synergy.stunValue}스턴`);
     if (u.synergy.magicArmorReduction > 0) statsText.push(`마깎${u.synergy.magicArmorReduction}%`);
 
+    const commonsCountText = u.totalRequiredCommons > 0 ? `흔함 ${u.totalRequiredCommons}개` : '';
+
     card.innerHTML = `
       <div class="card-title-row">
         <span class="card-name">${u.name}</span>
         <span class="card-tier">${tierName(u.tier)}</span>
       </div>
       <div class="card-stats-row">
-        ${statsText.join(' · ') || '메인 캐리'}
+        ${statsText.join(' · ') || (commonsCountText || '서포터')}
       </div>
     `;
     grid.appendChild(card);
@@ -278,26 +361,23 @@ function setTierFilter(tier) {
 
 // 덱 조작
 function addUnit(id) {
-  currentDeckIds.push(id);
-  evaluateDeck();
-}
-
-function removeUnit(id) {
-  const idx = currentDeckIds.indexOf(id);
-  if (idx !== -1) {
-    currentDeckIds.splice(idx, 1);
+  if (!currentDeckIds.includes(id)) {
+    currentDeckIds.push(id);
     evaluateDeck();
   }
 }
 
-function toggleUnit(id) {
-  const idx = currentDeckIds.indexOf(id);
-  if (idx !== -1) {
-    currentDeckIds.splice(idx, 1);
-  } else {
-    currentDeckIds.push(id);
-  }
+function removeUnit(id) {
+  currentDeckIds = currentDeckIds.filter(x => x !== id);
   evaluateDeck();
+}
+
+function toggleUnit(id) {
+  if (currentDeckIds.includes(id)) {
+    removeUnit(id);
+  } else {
+    addUnit(id);
+  }
 }
 
 function resetDeck() {
@@ -305,28 +385,22 @@ function resetDeck() {
   evaluateDeck();
 }
 
-// 프리셋 로드
-function loadPreset(type) {
-  if (type === 'luffy') {
-    currentDeckIds = ['luffy_trans', 'fujitora_leg'];
-  } else if (type === 'jinbe_king') {
-    currentDeckIds = ['jinbe_trans', 'king_limit', 'dragon_leg', 'vergo_hid'];
-  } else if (type === 'question_case') {
-    // 211깎 · 102이감 유저 질문 스펙 완벽 재현
-    currentDeckIds = [
-      'luffy_trans',     // 10깎 + 25암브
-      'zoro_trans',      // 35깎
-      'king_limit',      // 30깎 + 15이감
-      'shinobu_leg',     // 30깎 + 15이감
-      'vergo_hid',       // 35깎 + 20암브
-      'ace_chg',         // 30깎
-      'fujitora_leg',    // 12깎 + 30이감 + 1스턴
-      'smoker_leg',      // 10깎 + 25이감
-      'bonkure_hid',     // 11깎 + 0.5스턴
-      'perona_hid'       // 35이감
-    ];
-  } else if (type === 'shirahoshi') {
-    currentDeckIds = ['shirahoshi_trans', 'bartolomeo_leg', 'reiju_leg'];
+// 빠른 프리셋
+function loadPreset(presetName) {
+  switch (presetName) {
+    case 'luffy':
+      currentDeckIds = ['TR8']; // 루피 초월
+      break;
+    case 'jinbe_king':
+      currentDeckIds = ['TR22', 'Z10']; // 징베 초월 + 킹 제한
+      break;
+    case 'question_case':
+      // 211깎 · 102이감 유저 질문 케이스
+      currentDeckIds = ['TR8', 'L21', 'H10', 'D5', 'L37', 'L4', 'gorosei_nusjuro'];
+      break;
+    case 'shirahoshi':
+      currentDeckIds = ['TR15', 'SR4', 'TR16']; // 시라호시 초월 + 쿠라핌 + 아오키지 초월
+      break;
   }
   evaluateDeck();
 }

@@ -19,6 +19,14 @@
         </div>
       </div>
       <div class="header-right">
+        <div class="game-status-badge" id="gameStatusBadge">
+          <span class="status-dot dot-idle" id="gameDot"></span>
+          <div class="game-status-text-wrap">
+            <span class="game-status-title" id="gameStatusTitle">워크3 연동 대기</span>
+            <span class="game-status-desc" id="gameStatusDesc">상태 확인 중...</span>
+          </div>
+          <button class="btn-refresh-status" onclick="checkGameStatus()" title="연동 상태 확인">🔄</button>
+        </div>
         <div class="criteria-badge">
           <span class="label">v2.323 공식 기준</span>
           <span class="value">풀방깎 <strong>211</strong> · 풀이감 <strong>102%</strong> · <strong>65라</strong> 완결</span>
@@ -178,9 +186,13 @@
           <button class="tab-btn active" onclick="setTierFilter('ALL')">전체</button>
           <button class="tab-btn" onclick="setTierFilter('Transcendence')">초월함</button>
           <button class="tab-btn" onclick="setTierFilter('Immortal')">불멸함</button>
+          <button class="tab-btn" onclick="setTierFilter('Eternal')">영원한</button>
           <button class="tab-btn" onclick="setTierFilter('Limited')">제한됨</button>
           <button class="tab-btn" onclick="setTierFilter('Legendary')">전설</button>
-          <button class="tab-btn" onclick="setTierFilter('Hidden')">히든</button>
+          <button class="tab-btn" onclick="setTierFilter('Hidden')">히든/변화</button>
+          <button class="tab-btn" onclick="setTierFilter('Rare')">희귀함</button>
+          <button class="tab-btn" onclick="setTierFilter('Special')">특별함</button>
+          <button class="tab-btn" onclick="setTierFilter('Common')">흔함/안흔함</button>
           <button class="tab-btn" onclick="setTierFilter('Gorosei')">오로성</button>
         </div>
 

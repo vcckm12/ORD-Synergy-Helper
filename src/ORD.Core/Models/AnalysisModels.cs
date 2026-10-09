@@ -46,4 +46,9 @@ public class RecommendationItem
     public string CoreReason { get; set; } = string.Empty; // 추천 이유 (예: "방깎 30 + 이감 20% 동시 충족")
     public List<string> SolvedDeficits { get; set; } = new(); // 해결해 주는 결손 항목들
     public double RecipeReadiness { get; set; }           // 보유 패 기반 조합 완성도 (%)
+    public bool IsTwoInOne { get; set; }                  // 1타 2피 (복합 결손 동시 해소) 여부
+    public int TotalMissingCommons { get; set; }          // 부족한 흔함 총 개수
+    public Dictionary<string, int> MissingCommons { get; set; } = new(); // 부족한 흔함 패별 개수
+    public List<string> MissingDirectUnits { get; set; } = new();         // 부족한 직접 하위패 목록
 }
+

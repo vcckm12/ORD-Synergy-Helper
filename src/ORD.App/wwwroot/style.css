@@ -719,3 +719,143 @@ body {
   gap: 6px;
   flex-wrap: wrap;
 }
+
+/* 실시간 워크래프트3 연동 배지 */
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.game-status-badge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid #334155;
+  padding: 8px 14px;
+  border-radius: 8px;
+}
+
+.status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.dot-running {
+  background: #10b981;
+  box-shadow: 0 0 10px #10b981;
+  animation: pulse-dot 2s infinite;
+}
+
+.dot-map {
+  background: #38bdf8;
+  box-shadow: 0 0 10px #38bdf8;
+  animation: pulse-dot 1.5s infinite;
+}
+
+.dot-idle {
+  background: #64748b;
+}
+
+@keyframes pulse-dot {
+  0% { transform: scale(0.95); opacity: 0.8; }
+  50% { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(0.95); opacity: 0.8; }
+}
+
+.game-status-text-wrap {
+  display: flex;
+  flex-direction: column;
+}
+
+.game-status-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.game-status-desc {
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.btn-refresh-status {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  padding: 4px;
+  border-radius: 4px;
+  transition: transform 0.2s;
+}
+
+.btn-refresh-status:hover {
+  transform: rotate(90deg);
+}
+
+/* 1타 2피 배지 */
+.badge-two-in-one {
+  background: linear-gradient(135deg, #e11d48, #be123c);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 4px;
+  margin-left: 6px;
+  border: 1px solid #f43f5e;
+  box-shadow: 0 0 8px rgba(225, 29, 72, 0.4);
+}
+
+/* 조합 완성도 바 */
+.readiness-bar-wrap {
+  margin-top: 8px;
+  background: rgba(15, 23, 42, 0.6);
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(51, 65, 85, 0.6);
+}
+
+.readiness-header-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  margin-bottom: 4px;
+}
+
+.fill-readiness {
+  background: linear-gradient(90deg, #3b82f6, #10b981);
+}
+
+.missing-commons-wrap {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 5px;
+  flex-wrap: wrap;
+}
+
+.missing-title {
+  font-size: 11px;
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+.chip-missing {
+  font-size: 10px;
+  background: rgba(239, 68, 68, 0.15);
+  color: #fca5a5;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.missing-direct-units {
+  font-size: 11px;
+  color: #f59e0b;
+  margin-top: 4px;
+}
+

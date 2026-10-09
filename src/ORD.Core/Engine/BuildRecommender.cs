@@ -14,17 +14,19 @@ public class BuildRecommender
 
     public List<RecommendationItem> RecommendNextBuilds(DeckAnalysisResult analysis, IEnumerable<OrdUnit> currentDeck, int topCount = 5)
     {
-        var existingIds = currentDeck.Select(u => u.Id).ToHashSet();
+        var existingCodes = currentDeck.Select(u => _repository.ResolveCode(u.Id)).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        
+        // 추천 대상 유닛: 히든, 변화, 전설, 제한, 오로성
         var candidates = _repository.GetAll()
-            .Where(u => !existingIds.Contains(u.Id)) // 이미 보유한 유닛 제외
-            .Where(u => (u.Tier >= UnitTier.Hidden && u.Tier <= UnitTier.Legendary) || u.Tier == UnitTier.Gorosei)
+            .Where(u => !existingCodes.Contains(_repository.ResolveCode(u.Id))) // 이미 보유한 유닛 제외
+            .Where(u => (u.Tier >= UnitTier.Hidden && u.Tier <= UnitTier.Limited) || u.Tier == UnitTier.Gorosei)
             .ToList();
 
         var recommendations = new List<RecommendationItem>();
 
         foreach (var candidate in candidates)
         {
-            var item = ScoreCandidate(candidate, analysis);
+            var item = ScoreCandidate(candidate, analysis, currentDeck);
             if (item != null && item.RecommendationScore > 30)
             {
                 recommendations.Add(item);
@@ -37,7 +39,7 @@ public class BuildRecommender
             .ToList();
     }
 
-    private RecommendationItem? ScoreCandidate(OrdUnit candidate, DeckAnalysisResult analysis)
+    private RecommendationItem? ScoreCandidate(OrdUnit candidate, DeckAnalysisResult analysis, IEnumerable<OrdUnit> currentDeck)
     {
         double score = 50.0;
         var reasons = new List<string>();
@@ -68,7 +70,7 @@ public class BuildRecommender
                 {
                     // 211 풀방깎 달성 상태에서는 추가 방깎 효율 감쇠
                     score += Math.Min(5, totalCut * 0.1);
-                    reasons.Add($"방깎 +{totalCut} (이미 v2.323 211 풀방깎 도달)");
+                    reasons.Add($"방깎 +{totalCut} (v2.323 211 풀방깎 도달)");
                 }
             }
 
@@ -149,19 +151,34 @@ public class BuildRecommender
         }
 
         // 다중 시너지(복합 보완) 보너스 (예: 방깎과 이감을 동시에 채우는 유닛)
-        if (solvedDeficits.Count >= 2)
+        bool isTwoInOne = solvedDeficits.Count >= 2;
+        if (isTwoInOne)
         {
             score += 15;
             reasons.Add("★ 복합 결손 해소 (1타 2피 유닛)");
         }
 
+        // 하위패 인벤토리 완성도 계산
+        var ownedCodes = currentDeck.Select(u => u.Id);
+        var readiness = _repository.CalculateReadiness(candidate.Id, ownedCodes);
+
+        // 완성도가 높으면 현실적으로 뽑기 쉬우므로 가산점 부여 (최대 10점)
+        if (readiness.ReadinessPercentage >= 60.0)
+        {
+            score += (readiness.ReadinessPercentage - 50.0) * 0.2;
+        }
+
         return new RecommendationItem
         {
             TargetUnit = candidate,
-            RecommendationScore = Math.Min(100, score),
+            RecommendationScore = Math.Min(100, Math.Round(score, 1)),
             CoreReason = string.Join(", ", reasons),
             SolvedDeficits = solvedDeficits,
-            RecipeReadiness = 0.0 // 추후 하위패 인벤토리 연동 시 계산
+            RecipeReadiness = readiness.ReadinessPercentage,
+            IsTwoInOne = isTwoInOne,
+            TotalMissingCommons = readiness.TotalMissingCommons,
+            MissingCommons = readiness.MissingCommons,
+            MissingDirectUnits = readiness.MissingDirectUnits
         };
     }
 }
