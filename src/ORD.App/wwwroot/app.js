@@ -38,7 +38,7 @@ async function checkGameStatus() {
     if (status.isMapActive) {
       dotEl.className = 'status-dot dot-map';
       titleEl.textContent = '🎮 원랜디 v2.323 자체 엔진 연동됨';
-      descEl.textContent = status.detectedMap || '맵 감지 완료';
+      descEl.textContent = `${status.detectedMap} (실시간 감지: ${status.autoDetectedUnits ? status.autoDetectedUnits.length : 0}기)`;
     } else if (status.isGameRunning) {
       dotEl.className = 'status-dot dot-running';
       titleEl.textContent = '🎮 워크3 감지됨 (인게임 대기)';
@@ -57,15 +57,15 @@ async function checkGameStatus() {
         !sortedNew.every((id, idx) => id === sortedCurr[idx]);
       if (isDifferent) {
         currentDeckIds = [...status.autoDetectedUnits];
-        renderDeckChips();
         renderUnitPicker();
         await evaluateDeck();
       }
     }
   } catch (err) {
+    console.error('checkGameStatus error:', err);
     dotEl.className = 'status-dot dot-idle';
     titleEl.textContent = '연동 확인 불가';
-    descEl.textContent = '로컬 서버 확인 필요';
+    descEl.textContent = '확인: ' + (err.message || '로컬 서버 연결');
   }
 }
 
