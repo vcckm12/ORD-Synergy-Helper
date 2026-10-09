@@ -26,6 +26,11 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+// 유닛 DB 로드 및 자체 네이티브 메모리 스캐너 초기화
+var unitRepo = app.Services.GetRequiredService<UnitRepository>();
+var watcher = app.Services.GetRequiredService<GameWatcher>();
+watcher.InitializeUnits(unitRepo.GetAll());
+
 app.UseCors("AllowAll");
 app.UseDefaultFiles();
 app.UseStaticFiles();

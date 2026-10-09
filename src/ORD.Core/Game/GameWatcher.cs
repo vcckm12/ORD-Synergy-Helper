@@ -20,6 +20,7 @@ public class GameLiveStatus
 public class GameWatcher : IDisposable
 {
     private readonly MemoryReader _memoryReader = new();
+    private readonly NativeMemoryScanner _nativeScanner = new();
     private static readonly HttpClient _httpClient = CreateHttpClient();
 
     private static HttpClient CreateHttpClient()
@@ -27,6 +28,11 @@ public class GameWatcher : IDisposable
         var client = new HttpClient { Timeout = TimeSpan.FromMilliseconds(500) };
         client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) ORD-Helper");
         return client;
+    }
+
+    public void InitializeUnits(IEnumerable<Models.OrdUnit> units)
+    {
+        _nativeScanner.SetUnits(units);
     }
 
     public GameLiveStatus CheckStatus()
@@ -60,17 +66,31 @@ public class GameWatcher : IDisposable
             // 2. 로그 파일에서 현재 맵 로딩 상태 분석
             CheckLogFile(status);
 
+            // 3. 방안 B: 자체 네이티브 메모리 스캐너 구동
             if (status.IsMapActive)
             {
-                status.StatusMessage = $"🎮 원랜디 v2.323 자체 엔진 연동됨 ({status.DetectedMap})";
+                _nativeScanner.Start(process.Id);
+                var detected = _nativeScanner.GetDetectedUnitCodes();
+                status.AutoDetectedUnits = detected;
+
+                if (detected.Count > 0)
+                {
+                    status.StatusMessage = $"🎮 원랜디 v2.323 자체 엔진 연동됨 (자동 감지: {detected.Count}개)";
+                }
+                else
+                {
+                    status.StatusMessage = $"🎮 원랜디 v2.323 자체 엔진 연동됨 ({status.DetectedMap})";
+                }
             }
             else
             {
+                _nativeScanner.Stop();
                 status.StatusMessage = $"🎮 워크3 실행 중 (PID: {status.ProcessId}, 인게임 방 대기)";
             }
         }
         else
         {
+            _nativeScanner.Stop();
             status.IsGameRunning = false;
             status.StatusMessage = "대기 중 (독립 스마트 도우미 모드)";
         }
@@ -144,63 +164,9 @@ public class GameWatcher : IDisposable
         }
     }
 
-    private void CheckTmoBridge(GameLiveStatus status)
-    {
-        // TMO.GG Desktop 로컬 서버(포트 47786 기본, 48123/48124 보조)
-        int[] commonPorts = { 47786, 48123, 48124, 8080 };
-        foreach (var port in commonPorts)
-        {
-            try
-            {
-                using var msg = new HttpRequestMessage(HttpMethod.Get, $"http://127.0.0.1:{port}/status");
-                msg.Headers.Add("Origin", "https://tmo.gg");
-                var task = _httpClient.SendAsync(msg);
-                if (task.Wait(300))
-                {
-                    var resp = task.Result;
-                    if (resp.IsSuccessStatusCode)
-                    {
-                        status.TmoBridgeConnected = true;
-                        FetchTmoDatas(status, port);
-                        break;
-                    }
-                }
-            }
-            catch
-            {
-                // 브릿지 미실행 상태
-            }
-        }
-    }
-
-    private void FetchTmoDatas(GameLiveStatus status, int port)
-    {
-        try
-        {
-            using var msg = new HttpRequestMessage(HttpMethod.Get, $"http://127.0.0.1:{port}/datas");
-            msg.Headers.Add("Origin", "https://tmo.gg");
-            var task = _httpClient.SendAsync(msg);
-            if (task.Wait(400))
-            {
-                var resp = task.Result;
-                if (resp.IsSuccessStatusCode)
-                {
-                    var json = resp.Content.ReadAsStringAsync().Result;
-                    // TMO JSON 파싱 시 유닛 ID 수집 가능
-                    if (!string.IsNullOrEmpty(json))
-                    {
-                        // JSON 데이터 처리 로직
-                    }
-                }
-            }
-        }
-        catch
-        {
-        }
-    }
-
     public void Dispose()
     {
+        _nativeScanner.Dispose();
         _memoryReader.Dispose();
     }
 }
