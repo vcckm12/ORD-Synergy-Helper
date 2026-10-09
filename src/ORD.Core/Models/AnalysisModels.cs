@@ -2,10 +2,17 @@ namespace ORD.Core.Models;
 
 public static class NightmareCriteria
 {
-    // === 악몽 물딜 합격 기준선 ===
-    public const int MinPhysicalArmorReduction = 165;    // 최소 방깎 (이 이하면 라인사 위험 급증)
-    public const int SafePhysicalArmorReduction = 185;   // 안정권 풀방깎
-    public const int OvercapPhysicalArmor = 200;         // 초과 방깎 (이 이상은 방깎보다 이감/스턴이 우선)
+    // === 65라운드 완결 기준 (65라 종료 모드) ===
+    public const int Round65MinPhysicalArmor = 135;      // 65라 최소 방깎
+    public const int Round65SafePhysicalArmor = 155;     // 65라 풀방깎 기준 (150~155깎이면 충분)
+    public const int Round65OvercapPhysicalArmor = 175;  // 65라 초과 방깎 (175 이상은 방깎 투자 무의미)
+
+    // === 80라운드 정규 기준 ===
+    public const int Round80MinPhysicalArmor = 165;      // 80라 최소 방깎
+    public const int Round80SafePhysicalArmor = 185;     // 80라 풀방깎 기준
+    public const int Round80OvercapPhysicalArmor = 200;  // 80라 초과 방깎
+
+    // 이감 & 스턴 기준 (라운드 무관 필수 공통)
     public const int TargetPhysicalSlow = 110;           // 필수 이감 110%
     public const int TargetPhysicalSlowCap = 117;        // 안정권 이감 캡 (117%+)
     public const double MinPhysicalStun = 2.0;           // 필수 2스턴
@@ -19,6 +26,7 @@ public static class NightmareCriteria
 
 public class DeckAnalysisResult
 {
+    public int TargetRound { get; set; } = 65;           // 목표 라운드 (기본 65라 완결)
     public OrdUnit? MainCarry { get; set; }              // 최상위 코어 유닛
     public DamageType PrimaryType { get; set; }          // 덱 전체 속성 (물딜 or 마딜)
     

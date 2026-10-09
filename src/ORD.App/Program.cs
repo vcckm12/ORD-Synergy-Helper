@@ -44,9 +44,10 @@ PrintAnalysisAndRecommendations(deck2, evaluator, recommender);
 Console.WriteLine("\n-------------------------------------------------------------\n");
 
 // -------------------------------------------------------------
-// [시나리오 3: 유저 질문 상황 - 211깎, 이감 102% (오로성 선택 직전)]
+// [시나리오 3: 유저 질문 상황 - 65라운드 완결 모드, 211깎, 이감 102%]
 // -------------------------------------------------------------
-Console.WriteLine(">>> [시나리오 3] 유저 질문 케이스: 211깎 / 이감 102% 상태에서 오로성 선택 분석");
+Console.WriteLine(">>> [시나리오 3] 유저 질문 케이스: [65라운드 완결 모드] 211깎 / 이감 102% 상태에서 오로성 선택 분석");
+Console.WriteLine("    - 65라 완결 기준 풀방깎은 150~155깎입니다!");
 Console.WriteLine("    - 나스쥬로 선택 시: 이감 102% -> 117% (이감 +15%)");
 Console.WriteLine("    - 워큐리 선택 시  : 방깎 211깎 -> 226깎 (방깎 +15)\n");
 
@@ -68,29 +69,29 @@ var deck3 = new List<OrdUnit>
     }
 };
 
-PrintAnalysisAndRecommendations(deck3, evaluator, recommender);
+PrintAnalysisAndRecommendations(deck3, evaluator, recommender, 65);
 
-var analysis3 = evaluator.Evaluate(deck3);
+var analysis3 = evaluator.Evaluate(deck3, 65);
 var allRecs = recommender.RecommendNextBuilds(analysis3, deck3, 15);
 var nusjuroRec = allRecs.FirstOrDefault(r => r.TargetUnit.Id == "gorosei_nusjuro");
 var warcuryRec = allRecs.FirstOrDefault(r => r.TargetUnit.Id == "gorosei_warcury");
 
-Console.WriteLine("\n[4] ★ [오로성 선택 직관 비교]:");
+Console.WriteLine("\n[4] ★ [65라운드 완결 모드 기준 오로성 선택 직관 비교]:");
 if (nusjuroRec != null)
 {
-    Console.WriteLine($"   * [추천 승리] {nusjuroRec.TargetUnit.Name} -> 추천점수: {nusjuroRec.RecommendationScore:F0}점 ({nusjuroRec.CoreReason})");
-    Console.WriteLine($"     => 결과: 이감 102% + 15% = 117% (악몽 안정권 캡 완벽 도달, 몹 완전 고정!)");
+    Console.WriteLine($"   * [압도적 추천] {nusjuroRec.TargetUnit.Name} -> 추천점수: {nusjuroRec.RecommendationScore:F0}점 ({nusjuroRec.CoreReason})");
+    Console.WriteLine($"     => 결과: 65라 보스/라인 몹이 제자리에 완전 고정(이감 117% 캡 도달). 211깎 초극딜로 5초 컷 클리어!");
 }
 if (warcuryRec != null)
 {
-    Console.WriteLine($"   * [비추천]   {warcuryRec.TargetUnit.Name} -> 추천점수: {warcuryRec.RecommendationScore:F0}점 ({warcuryRec.CoreReason})");
-    Console.WriteLine($"     => 결과: 방깎 211깎 + 15깎 = 226깎 (이미 200깎 초과 상태라 딜 체감 미미, 이감 102% 유지되어 누수 위험)");
+    Console.WriteLine($"   * [비추천 낭비] {warcuryRec.TargetUnit.Name} -> 추천점수: {warcuryRec.RecommendationScore:F0}점 ({warcuryRec.CoreReason})");
+    Console.WriteLine($"     => 결과: 65라 풀방깎(155깎) 대비 이미 +56깎 초과 상태에서 또 +15깎(총 226깎)은 200% 오버킬 낭비입니다.");
 }
 
 
-void PrintAnalysisAndRecommendations(List<OrdUnit> deck, SynergyEvaluator eval, BuildRecommender rec)
+void PrintAnalysisAndRecommendations(List<OrdUnit> deck, SynergyEvaluator eval, BuildRecommender rec, int targetRound = 65)
 {
-    var analysis = eval.Evaluate(deck);
+    var analysis = eval.Evaluate(deck, targetRound);
 
     Console.WriteLine($"\n[1] 덱 분석 결과");
     Console.WriteLine($" * 최상위 코어: {analysis.MainCarry?.Name ?? "없음"} (판별: {analysis.PrimaryType})");

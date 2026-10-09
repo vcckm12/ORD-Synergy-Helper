@@ -4,10 +4,10 @@ namespace ORD.Core.Engine;
 
 public class SynergyEvaluator
 {
-    public DeckAnalysisResult Evaluate(IEnumerable<OrdUnit> currentDeck)
+    public DeckAnalysisResult Evaluate(IEnumerable<OrdUnit> currentDeck, int targetRound = 65)
     {
         var deck = currentDeck.ToList();
-        var result = new DeckAnalysisResult();
+        var result = new DeckAnalysisResult { TargetRound = targetRound };
 
         if (!deck.Any())
         {
@@ -51,24 +51,28 @@ public class SynergyEvaluator
         var deficits = result.Deficits;
         double score = 100.0;
 
+        int minArmor = result.TargetRound <= 65 ? NightmareCriteria.Round65MinPhysicalArmor : NightmareCriteria.Round80MinPhysicalArmor;
+        int safeArmor = result.TargetRound <= 65 ? NightmareCriteria.Round65SafePhysicalArmor : NightmareCriteria.Round80SafePhysicalArmor;
+        int overcapArmor = result.TargetRound <= 65 ? NightmareCriteria.Round65OvercapPhysicalArmor : NightmareCriteria.Round80OvercapPhysicalArmor;
+
         if (result.PrimaryType == DamageType.Physical)
         {
             // [물딜 1순위: 방깎]
             int totalEffectiveArmorCut = result.TotalArmorReduction + (int)(result.TotalArmorBreak * 0.7);
-            if (totalEffectiveArmorCut < NightmareCriteria.MinPhysicalArmorReduction)
+            if (totalEffectiveArmorCut < minArmor)
             {
-                int missing = NightmareCriteria.SafePhysicalArmorReduction - totalEffectiveArmorCut;
-                deficits.Add($"[치명적] 방깎 부족: 현재 {totalEffectiveArmorCut}깎 (악몽 권장 185깎 대비 {missing}깎 부족)");
+                int missing = safeArmor - totalEffectiveArmorCut;
+                deficits.Add($"[치명적] 방깎 부족: 현재 {totalEffectiveArmorCut}깎 ({result.TargetRound}라 권장 {safeArmor}깎 대비 {missing}깎 부족)");
                 score -= Math.Min(50, missing * 0.6);
             }
-            else if (totalEffectiveArmorCut < NightmareCriteria.SafePhysicalArmorReduction)
+            else if (totalEffectiveArmorCut < safeArmor)
             {
-                deficits.Add($"[경고] 방깎 보완 권장: 현재 {totalEffectiveArmorCut}깎 (185 풀방깎까지 {NightmareCriteria.SafePhysicalArmorReduction - totalEffectiveArmorCut}깎 남음)");
+                deficits.Add($"[경고] 방깎 보완 권장: 현재 {totalEffectiveArmorCut}깎 ({safeArmor} 풀방깎까지 {safeArmor - totalEffectiveArmorCut}깎 남음)");
                 score -= 10;
             }
-            else if (totalEffectiveArmorCut >= NightmareCriteria.OvercapPhysicalArmor)
+            else if (totalEffectiveArmorCut >= overcapArmor)
             {
-                deficits.Add($"[초과 달성] 방깎 {totalEffectiveArmorCut}깎: 악몽 185 풀방깎을 초과했습니다. 추가 방깎은 한계 효용이 낮으므로 '이감 117% 캡'과 '스턴 홀딩' 완성이 절대적으로 우선됩니다.");
+                deficits.Add($"[초과 달성] 방깎 {totalEffectiveArmorCut}깎: {result.TargetRound}라 완결 풀방깎({safeArmor}깎)을 {totalEffectiveArmorCut - safeArmor}깎 초과했습니다! 추가 방깎 투자는 효율이 없으므로 '이감 117% 캡'과 '스턴 홀딩' 완성이 100% 절대적입니다.");
             }
 
             // [물딜 2순위: 이감]

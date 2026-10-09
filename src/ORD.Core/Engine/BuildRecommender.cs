@@ -53,25 +53,28 @@ public class BuildRecommender
 
             // 1. 방깎 기여도 평가
             int totalCut = candidate.Synergy.ArmorReduction + candidate.Synergy.ArmorBreakOverlap;
+            int safeArmor = analysis.TargetRound <= 65 ? NightmareCriteria.Round65SafePhysicalArmor : NightmareCriteria.Round80SafePhysicalArmor;
+            int overcapArmor = analysis.TargetRound <= 65 ? NightmareCriteria.Round65OvercapPhysicalArmor : NightmareCriteria.Round80OvercapPhysicalArmor;
+
             if (totalCut > 0)
             {
                 int currentCut = analysis.TotalArmorReduction;
-                if (currentCut < NightmareCriteria.SafePhysicalArmorReduction)
+                if (currentCut < safeArmor)
                 {
                     score += Math.Min(35, totalCut * 0.9);
                     reasons.Add($"방깎 +{totalCut} 보완");
                     solvedDeficits.Add("방깎");
                 }
-                else if (currentCut < NightmareCriteria.OvercapPhysicalArmor)
+                else if (currentCut < overcapArmor)
                 {
                     score += Math.Min(15, totalCut * 0.4);
                     reasons.Add($"방깎 +{totalCut} (초과 방깎 대비)");
                 }
                 else
                 {
-                    // 200깎 이상 초과 상태에서는 한계효용 감쇠
+                    // 초과 상태에서는 한계효용 감쇠
                     score += Math.Min(5, totalCut * 0.1);
-                    reasons.Add($"방깎 +{totalCut} (이미 200깎 초과로 한계효용 낮음)");
+                    reasons.Add($"방깎 +{totalCut} (이미 {analysis.TargetRound}라 풀방깎 초과로 한계효용 낮음)");
                 }
             }
 
