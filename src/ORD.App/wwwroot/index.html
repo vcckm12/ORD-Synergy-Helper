@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ORD Synergy Helper - 원랜디 v2.323 스마트 조합 도우미</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+</head>
+<body>
+  <div class="app-container">
+    <!-- 헤더 -->
+    <header class="app-header">
+      <div class="header-left">
+        <div class="logo-badge">ORD 2.323</div>
+        <div class="header-title-group">
+          <h1>원랜디 스마트 시너지 도우미</h1>
+          <p class="subtitle">악몽 난이도(65라 완결) 최상위 유닛 기반 결손 분석 & 1타 2피 빌드 추천</p>
+        </div>
+      </div>
+      <div class="header-right">
+        <div class="criteria-badge">
+          <span class="label">v2.323 공식 기준</span>
+          <span class="value">풀방깎 <strong>211</strong> · 풀이감 <strong>102%</strong> · <strong>65라</strong> 완결</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- 빠른 프리셋 바 -->
+    <div class="preset-bar">
+      <span class="preset-label">⚡ 빠른 시뮬레이션:</span>
+      <button class="btn-preset" onclick="loadPreset('luffy')">루피 초월 (물딜)</button>
+      <button class="btn-preset" onclick="loadPreset('jinbe_king')">징초 + 킹제 (클트키)</button>
+      <button class="btn-preset" onclick="loadPreset('question_case')">211깎 · 102이감 (유저 질문 상황)</button>
+      <button class="btn-preset" onclick="loadPreset('shirahoshi')">시라호시 초월 (마딜)</button>
+      <button class="btn-preset btn-reset" onclick="resetDeck()">전체 비우기</button>
+    </div>
+
+    <!-- 메인 대시보드 그리드 -->
+    <div class="dashboard-grid">
+      <!-- 1. 좌측: 실시간 시너지 게이지 및 결손 분석 -->
+      <section class="card status-card">
+        <div class="card-header">
+          <h2>📊 현재 덱 상태 분석</h2>
+          <span id="deckTypeBadge" class="badge badge-physical">물리 덱</span>
+        </div>
+
+        <div class="main-carry-box">
+          <div class="carry-info">
+            <span class="carry-label">메인 코어 캐리</span>
+            <span id="mainCarryName" class="carry-name">- 유닛을 선택하세요 -</span>
+          </div>
+          <div class="score-box">
+            <span class="score-label">악몽 클리어 기대치</span>
+            <div class="score-display">
+              <span id="scoreValue" class="score-num">0</span><span class="score-max">/100</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4대 핵심 게이지 -->
+        <div class="gauges-container">
+          <!-- 방깎 -->
+          <div class="gauge-item">
+            <div class="gauge-header">
+              <span class="gauge-title">🛡️ 방어력 감소 (방깎)</span>
+              <span class="gauge-stat"><strong id="armorVal">0</strong> / 211깎</span>
+            </div>
+            <div class="progress-track">
+              <div id="armorBar" class="progress-fill fill-armor" style="width: 0%"></div>
+            </div>
+            <span id="armorSub" class="gauge-sub">기본 0 + 암브 0</span>
+          </div>
+
+          <!-- 이감 -->
+          <div class="gauge-item">
+            <div class="gauge-header">
+              <span class="gauge-title">❄️ 이동속도 감소 (이감)</span>
+              <span class="gauge-stat"><strong id="slowVal">0</strong> / 102%</span>
+            </div>
+            <div class="progress-track">
+              <div id="slowBar" class="progress-fill fill-slow" style="width: 0%"></div>
+            </div>
+            <span id="slowSub" class="gauge-sub">풀이감까지 102% 필요</span>
+          </div>
+
+          <!-- 스턴 -->
+          <div class="gauge-item">
+            <div class="gauge-header">
+              <span class="gauge-title">⚡ 스턴 홀딩</span>
+              <span class="gauge-stat"><strong id="stunVal">0.0</strong> / 2.0 스턴</span>
+            </div>
+            <div class="progress-track">
+              <div id="stunBar" class="progress-fill fill-stun" style="width: 0%"></div>
+            </div>
+            <span id="stunSub" class="gauge-sub">최소 2.0 스턴 권장</span>
+          </div>
+        </div>
+
+        <!-- 결손(Deficit) 진단 박스 -->
+        <div class="deficits-box">
+          <h3>⚠️ 악몽 기준 결손 진단</h3>
+          <ul id="deficitsList" class="deficits-list">
+            <li>필드에 유닛을 추가하면 실시간으로 결손이 분석됩니다.</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- 2. 우측: AI 스마트 시너지 추천 랭킹 -->
+      <section class="card recommend-card">
+        <div class="card-header">
+          <h2>💡 AI 스마트 빌드 추천</h2>
+          <span class="header-tag">결손 보완 1타 2피 유닛 우선</span>
+        </div>
+
+        <p class="rec-desc">단순 재료 완성이 아닌, 현재 결손된 방깎/이감/스턴을 한 번에 채워주는 최적의 유닛을 추천합니다.</p>
+
+        <!-- 추천 유닛 랭킹 리스트 -->
+        <div id="recList" class="recommend-list">
+          <div class="rec-empty">유닛을 추가하면 추천 결과가 표시됩니다.</div>
+        </div>
+
+        <!-- 오로성 직관 비교 토글 카드 -->
+        <div class="gorosei-compare-card">
+          <h3>👑 오로성 선택 직관 비교 (워큐리 vs 나스쥬로)</h3>
+          <div class="gorosei-grid">
+            <div class="gorosei-col" id="colWarcury">
+              <div class="gorosei-title">워큐리 (+15깎)</div>
+              <p class="gorosei-desc" id="descWarcury">방깎 보강</p>
+              <button class="btn-sm" onclick="toggleUnit('gorosei_warcury')">워큐리 적용/해제</button>
+            </div>
+            <div class="gorosei-col" id="colNusjuro">
+              <div class="gorosei-title">나스쥬로 (+15이감)</div>
+              <p class="gorosei-desc" id="descNusjuro">이감 캡 완성</p>
+              <button class="btn-sm" onclick="toggleUnit('gorosei_nusjuro')">나스쥬로 적용/해제</button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- 3. 하단: 내 필드 보유 유닛 & 유닛 도감 추가 패널 -->
+    <div class="deck-manager-grid">
+      <!-- 현재 보유 유닛 -->
+      <section class="card deck-card">
+        <div class="card-header">
+          <h2>⚔️ 현재 필드 보유 유닛 (<span id="deckCount">0</span>기)</h2>
+          <span class="hint">유닛을 클릭하면 필드에서 제거됩니다.</span>
+        </div>
+        <div id="currentDeckContainer" class="deck-tags-container">
+          <div class="deck-empty">아래 도감에서 유닛을 클릭해 추가하세요.</div>
+        </div>
+      </section>
+
+      <!-- 전체 유닛 선택기 -->
+      <section class="card picker-card">
+        <div class="card-header">
+          <h2>📖 2.323 유닛 도감 (클릭하여 추가)</h2>
+          <div class="search-wrap">
+            <input type="text" id="unitSearch" placeholder="유닛 이름 검색 (예: 루피, 킹, 드래곤)..." oninput="filterUnits()">
+          </div>
+        </div>
+
+        <!-- 티어 필터 탭 -->
+        <div class="tier-tabs">
+          <button class="tab-btn active" onclick="setTierFilter('ALL')">전체</button>
+          <button class="tab-btn" onclick="setTierFilter('Transcendence')">초월함</button>
+          <button class="tab-btn" onclick="setTierFilter('Immortal')">불멸함</button>
+          <button class="tab-btn" onclick="setTierFilter('Limited')">제한됨</button>
+          <button class="tab-btn" onclick="setTierFilter('Legendary')">전설</button>
+          <button class="tab-btn" onclick="setTierFilter('Hidden')">히든</button>
+          <button class="tab-btn" onclick="setTierFilter('Gorosei')">오로성</button>
+        </div>
+
+        <!-- 유닛 카드 그리드 -->
+        <div id="unitPickerGrid" class="unit-picker-grid">
+          <!-- JS로 유닛 카드 렌더링 -->
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
