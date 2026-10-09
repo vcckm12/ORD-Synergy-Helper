@@ -53,8 +53,7 @@ public class BuildRecommender
 
             // 1. 방깎 기여도 평가
             int totalCut = candidate.Synergy.ArmorReduction + candidate.Synergy.ArmorBreakOverlap;
-            int safeArmor = analysis.TargetRound <= 65 ? NightmareCriteria.Round65SafePhysicalArmor : NightmareCriteria.Round80SafePhysicalArmor;
-            int overcapArmor = analysis.TargetRound <= 65 ? NightmareCriteria.Round65OvercapPhysicalArmor : NightmareCriteria.Round80OvercapPhysicalArmor;
+            int safeArmor = NightmareCriteria.V2323_NightmareArmor; // 211
 
             if (totalCut > 0)
             {
@@ -65,34 +64,28 @@ public class BuildRecommender
                     reasons.Add($"방깎 +{totalCut} 보완");
                     solvedDeficits.Add("방깎");
                 }
-                else if (currentCut < overcapArmor)
-                {
-                    score += Math.Min(15, totalCut * 0.4);
-                    reasons.Add($"방깎 +{totalCut} (초과 방깎 대비)");
-                }
                 else
                 {
-                    // 초과 상태에서는 한계효용 감쇠
+                    // 211 풀방깎 달성 상태에서는 추가 방깎 효율 감쇠
                     score += Math.Min(5, totalCut * 0.1);
-                    reasons.Add($"방깎 +{totalCut} (이미 {analysis.TargetRound}라 풀방깎 초과로 한계효용 낮음)");
+                    reasons.Add($"방깎 +{totalCut} (이미 v2.323 211 풀방깎 도달)");
                 }
             }
 
             // 2. 이감 기여도 평가
+            int targetSlow = NightmareCriteria.V2323_FullSlowCap; // 102
             if (candidate.Synergy.MovementSlow > 0)
             {
-                if (analysis.TotalSlow < NightmareCriteria.TargetPhysicalSlow)
+                if (analysis.TotalSlow < targetSlow)
                 {
-                    score += Math.Min(35, candidate.Synergy.MovementSlow * 1.5);
-                    reasons.Add($"이감 +{candidate.Synergy.MovementSlow}% (누수 위험 해소)");
-                    solvedDeficits.Add("이감");
-                }
-                else if (analysis.TotalSlow < NightmareCriteria.TargetPhysicalSlowCap)
-                {
-                    // 102% -> 117% 등 안정권 풀캡 달성
                     score += Math.Min(45, candidate.Synergy.MovementSlow * 2.5);
-                    reasons.Add($"이감 +{candidate.Synergy.MovementSlow}% (★악몽 안정권 117% 캡 완성)");
-                    solvedDeficits.Add("이감 캡 완성");
+                    reasons.Add($"이감 +{candidate.Synergy.MovementSlow}% (★v2.323 풀이감 102% 완성)");
+                    solvedDeficits.Add("풀이감 102% 완성");
+                }
+                else
+                {
+                    score += Math.Min(10, candidate.Synergy.MovementSlow * 0.3);
+                    reasons.Add($"이감 +{candidate.Synergy.MovementSlow}% (풀이감 초과 보강)");
                 }
             }
 

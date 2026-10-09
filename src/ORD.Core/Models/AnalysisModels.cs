@@ -2,25 +2,18 @@ namespace ORD.Core.Models;
 
 public static class NightmareCriteria
 {
-    // === 65라운드 완결 기준 (65라 종료 모드) ===
-    public const int Round65MinPhysicalArmor = 135;      // 65라 최소 방깎
-    public const int Round65SafePhysicalArmor = 155;     // 65라 풀방깎 기준 (150~155깎이면 충분)
-    public const int Round65OvercapPhysicalArmor = 175;  // 65라 초과 방깎 (175 이상은 방깎 투자 무의미)
+    // ==========================================
+    // [v2.323 공식 기준 스펙 (ORDR / 최신 패치)]
+    // ==========================================
+    public const int V2323_NightmareArmor = 211;         // v2.323 악몽 풀방깎 기준 (정식 211깎)
+    public const int V2323_ShinArmor = 201;              // v2.323 신 난이도 풀방깎 기준 (정식 201깎)
+    public const int V2323_FullSlowCap = 102;            // v2.323 신/악몽 공통 풀이감 기준 (정식 102%)
+    public const int V2323_EndRound = 65;                // v2.323 최종 완결 라운드 (65라운드)
 
-    // === 80라운드 정규 기준 ===
-    public const int Round80MinPhysicalArmor = 165;      // 80라 최소 방깎
-    public const int Round80SafePhysicalArmor = 185;     // 80라 풀방깎 기준
-    public const int Round80OvercapPhysicalArmor = 200;  // 80라 초과 방깎
-
-    // 이감 & 스턴 기준 (라운드 무관 필수 공통)
-    public const int TargetPhysicalSlow = 110;           // 필수 이감 110%
-    public const int TargetPhysicalSlowCap = 117;        // 안정권 이감 캡 (117%+)
-    public const double MinPhysicalStun = 2.0;           // 필수 2스턴
+    // 스턴 기준선
+    public const double MinPhysicalStun = 2.0;           // 필수 2스턴 (드래곤, 이완히든 그블 등)
     public const double MaxPhysicalStun = 2.5;           // 스턴 과투자 방지 상한선
-
-    // === 악몽 마딜 합격 기준선 ===
-    public const double MinMagicStun = 2.5;              // 마딜은 새면 즉사하므로 최소 2.5스턴
-    public const int TargetMagicSlow = 100;              // 마딜 이감 100%
+    public const double MinMagicStun = 2.5;              // 마딜 필수 스턴 (2.5~3스턴)
     public const int MinMagicArmorReduction = 20;        // 마방깎 / 마뎀증 20%+
 }
 

@@ -51,9 +51,9 @@ public class SynergyEvaluator
         var deficits = result.Deficits;
         double score = 100.0;
 
-        int minArmor = result.TargetRound <= 65 ? NightmareCriteria.Round65MinPhysicalArmor : NightmareCriteria.Round80MinPhysicalArmor;
-        int safeArmor = result.TargetRound <= 65 ? NightmareCriteria.Round65SafePhysicalArmor : NightmareCriteria.Round80SafePhysicalArmor;
-        int overcapArmor = result.TargetRound <= 65 ? NightmareCriteria.Round65OvercapPhysicalArmor : NightmareCriteria.Round80OvercapPhysicalArmor;
+        int safeArmor = NightmareCriteria.V2323_NightmareArmor; // v2.323 정식 211깎
+        int minArmor = 175;
+        int targetSlow = NightmareCriteria.V2323_FullSlowCap;   // v2.323 정식 102% 이감
 
         if (result.PrimaryType == DamageType.Physical)
         {
@@ -62,31 +62,29 @@ public class SynergyEvaluator
             if (totalEffectiveArmorCut < minArmor)
             {
                 int missing = safeArmor - totalEffectiveArmorCut;
-                deficits.Add($"[치명적] 방깎 부족: 현재 {totalEffectiveArmorCut}깎 ({result.TargetRound}라 권장 {safeArmor}깎 대비 {missing}깎 부족)");
+                deficits.Add($"[치명적] 방깎 부족: 현재 {totalEffectiveArmorCut}깎 (v2.323 악몽 풀방깎 {safeArmor}깎 대비 {missing}깎 부족)");
                 score -= Math.Min(50, missing * 0.6);
             }
             else if (totalEffectiveArmorCut < safeArmor)
             {
-                deficits.Add($"[경고] 방깎 보완 권장: 현재 {totalEffectiveArmorCut}깎 ({safeArmor} 풀방깎까지 {safeArmor - totalEffectiveArmorCut}깎 남음)");
+                deficits.Add($"[경고] 방깎 보완 권장: 현재 {totalEffectiveArmorCut}깎 (v2.323 211 풀방깎까지 {safeArmor - totalEffectiveArmorCut}깎 남음)");
                 score -= 10;
             }
-            else if (totalEffectiveArmorCut >= overcapArmor)
+            else
             {
-                deficits.Add($"[초과 달성] 방깎 {totalEffectiveArmorCut}깎: {result.TargetRound}라 완결 풀방깎({safeArmor}깎)을 {totalEffectiveArmorCut - safeArmor}깎 초과했습니다! 추가 방깎 투자는 효율이 없으므로 '이감 117% 캡'과 '스턴 홀딩' 완성이 100% 절대적입니다.");
+                deficits.Add($"[풀방깎 달성] 방깎 {totalEffectiveArmorCut}깎: v2.323 악몽 목표(211깎)에 완전 도달했습니다! 추가 방깎 투자는 효율이 급감하므로 '풀이감(102%)'과 '스턴 홀딩' 완성이 100% 절대적입니다.");
             }
 
             // [물딜 2순위: 이감]
-            if (result.TotalSlow < NightmareCriteria.TargetPhysicalSlow)
+            if (result.TotalSlow < targetSlow)
             {
-                int missingSlow = NightmareCriteria.TargetPhysicalSlow - result.TotalSlow;
-                deficits.Add($"[이감 위험] 현재 {result.TotalSlow}% (최소 기준 110% 대비 {missingSlow}% 부족, 라인 몹 누수 위험)");
-                score -= Math.Min(30, missingSlow * 0.4);
+                int missingSlow = targetSlow - result.TotalSlow;
+                deficits.Add($"[이감 위험] 현재 {result.TotalSlow}% (v2.323 악몽 풀이감 102% 대비 {missingSlow}% 부족, 라인 몹 누수 위험)");
+                score -= Math.Min(30, missingSlow * 0.5);
             }
-            else if (result.TotalSlow < NightmareCriteria.TargetPhysicalSlowCap)
+            else
             {
-                int missingSlow = NightmareCriteria.TargetPhysicalSlowCap - result.TotalSlow;
-                deficits.Add($"[이감 보강 권장] 현재 {result.TotalSlow}% (완전 안정 캡 117%까지 {missingSlow}% 부족, 몹 뭉침 극대화 필요)");
-                score -= 5;
+                deficits.Add($"[풀이감 달성] 현재 {result.TotalSlow}%: v2.323 악몽 풀이감(102%) 조건을 완벽히 충족했습니다.");
             }
 
             // [물딜 3순위: 스턴]
