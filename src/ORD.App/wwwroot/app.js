@@ -51,8 +51,10 @@ async function checkGameStatus() {
 
     // 인게임 유닛 자동 반영 로직
     if (status.autoDetectedUnits && status.autoDetectedUnits.length > 0) {
-      const isDifferent = status.autoDetectedUnits.length !== currentDeckIds.length ||
-        !status.autoDetectedUnits.every((id, idx) => id === currentDeckIds[idx]);
+      const sortedNew = [...status.autoDetectedUnits].sort();
+      const sortedCurr = [...currentDeckIds].sort();
+      const isDifferent = sortedNew.length !== sortedCurr.length ||
+        !sortedNew.every((id, idx) => id === sortedCurr[idx]);
       if (isDifferent) {
         currentDeckIds = [...status.autoDetectedUnits];
         renderDeckChips();

@@ -66,26 +66,24 @@ public class GameWatcher : IDisposable
             // 2. 로그 파일에서 현재 맵 로딩 상태 분석
             CheckLogFile(status);
 
-            // 3. 방안 B: 자체 네이티브 메모리 스캐너 구동
-            if (status.IsMapActive)
-            {
-                _nativeScanner.Start(process.Id);
-                var detected = _nativeScanner.GetDetectedUnitCodes();
-                status.AutoDetectedUnits = detected;
+            // 3. 방안 B: 자체 네이티브 메모리 스캐너 구동 (워크3 실행 중이면 상시 가동)
+            _nativeScanner.Start(process.Id);
+            var detected = _nativeScanner.GetDetectedUnitCodes();
+            status.AutoDetectedUnits = detected;
 
-                if (detected.Count > 0)
-                {
-                    status.StatusMessage = $"🎮 원랜디 v2.323 자체 엔진 연동됨 (자동 감지: {detected.Count}개)";
-                }
-                else
-                {
-                    status.StatusMessage = $"🎮 원랜디 v2.323 자체 엔진 연동됨 ({status.DetectedMap})";
-                }
+            if (detected.Count > 0)
+            {
+                status.IsMapActive = true;
+                status.DetectedMap = "ORDR_S2_2.323 (원피스 랜덤 디펜스)";
+                status.StatusMessage = $"🎮 원랜디 v2.323 자체 엔진 연동됨 (자동 감지: {detected.Count}개)";
+            }
+            else if (status.IsMapActive)
+            {
+                status.StatusMessage = $"🎮 원랜디 v2.323 자체 엔진 연동됨 ({status.DetectedMap})";
             }
             else
             {
-                _nativeScanner.Stop();
-                status.StatusMessage = $"🎮 워크3 실행 중 (PID: {status.ProcessId}, 인게임 방 대기)";
+                status.StatusMessage = $"🎮 워크3 실행 중 (PID: {status.ProcessId}, 인게임 스캔 중)";
             }
         }
         else
