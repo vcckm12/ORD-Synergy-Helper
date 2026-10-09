@@ -60,16 +60,9 @@ public class GameWatcher : IDisposable
             // 2. 로그 파일에서 현재 맵 로딩 상태 분석
             CheckLogFile(status);
 
-            // 3. TMO.GG 로컬 브릿지 연동 확인 (포트 47786)
-            CheckTmoBridge(status);
-
-            if (status.TmoBridgeConnected)
+            if (status.IsMapActive)
             {
-                status.StatusMessage = $"⚡ TMO 데스크탑 연동됨 (인게임 유닛 실시간 반영 중)";
-            }
-            else if (status.IsMapActive)
-            {
-                status.StatusMessage = $"🎮 원랜디 v2.323 맵 실행 중 ({status.DetectedMap})";
+                status.StatusMessage = $"🎮 원랜디 v2.323 자체 엔진 연동됨 ({status.DetectedMap})";
             }
             else
             {
@@ -79,7 +72,7 @@ public class GameWatcher : IDisposable
         else
         {
             status.IsGameRunning = false;
-            status.StatusMessage = "대기 중 (수동 시뮬레이터 모드)";
+            status.StatusMessage = "대기 중 (독립 스마트 도우미 모드)";
         }
 
         return status;

@@ -35,21 +35,17 @@ async function checkGameStatus() {
     const res = await fetch('/api/game/status');
     const status = await res.json();
 
-    if (status.tmoBridgeConnected) {
+    if (status.isMapActive) {
       dotEl.className = 'status-dot dot-map';
-      titleEl.textContent = '⚡ TMO 데스크탑 연동됨';
-      descEl.textContent = '인게임 유닛 실시간 자동 동기화 중';
-    } else if (status.isMapActive) {
-      dotEl.className = 'status-dot dot-map';
-      titleEl.textContent = '🎮 원랜디 v2.323 감지됨';
-      descEl.textContent = status.detectedMap || '맵 로드 완료';
+      titleEl.textContent = '🎮 원랜디 v2.323 자체 엔진 연동됨';
+      descEl.textContent = status.detectedMap || '맵 감지 완료';
     } else if (status.isGameRunning) {
       dotEl.className = 'status-dot dot-running';
-      titleEl.textContent = '🎮 워크3 실행 중 (인게임 대기)';
+      titleEl.textContent = '🎮 워크3 감지됨 (인게임 대기)';
       descEl.textContent = `${status.detectedVersion} (PID: ${status.processId})`;
     } else {
       dotEl.className = 'status-dot dot-idle';
-      titleEl.textContent = '스마트 조합 모드 (수동/시뮬)';
+      titleEl.textContent = '스마트 조합 모드 (독자 구동)';
       descEl.textContent = '유닛 클릭 시 즉시 1타 2피 & 항법 분석';
     }
 
