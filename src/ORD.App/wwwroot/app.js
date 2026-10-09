@@ -260,29 +260,42 @@ function updateDashboardUI(data) {
   }
 
   // 6. 오로성 상태 갱신
-  updateGoroseiCards(totalArmor, analysis.totalSlow);
+  updateGoroseiCards(totalArmor, analysis.totalSlow, analysis.primaryType);
 }
 
 // 오로성 직관 설명 갱신
-function updateGoroseiCards(armor, slow) {
+function updateGoroseiCards(armor, slow, primaryType) {
   const colW = document.getElementById('colWarcury');
   const colN = document.getElementById('colNusjuro');
+  const colS = document.getElementById('colSaturn');
   const descW = document.getElementById('descWarcury');
   const descN = document.getElementById('descNusjuro');
+  const descS = document.getElementById('descSaturn');
 
   const afterW = armor + 15;
   const afterN = slow + 15;
 
+  // 워큐리 (-15깎, -15마방깎)
   if (armor >= 211) {
     descW.innerHTML = `<span style="color: #ef4444">이미 211 풀방깎 달성! (+15깎 효율 감쇠로 비추천)</span>`;
   } else {
     descW.innerHTML = `<span style="color: #38bdf8">현재 ${armor}깎 → <strong>${afterW}깎</strong> (풀방깎 보완 기여)</span>`;
   }
 
+  // 나스쥬로 (-15이감, -15공속)
   if (slow < 102) {
     descN.innerHTML = `<span style="color: #10b981">현재 ${slow}% → <strong>${afterN}%</strong> (★풀이감 102% 즉시 완성!)</span>`;
   } else {
-    descN.innerHTML = `<span style="color: #38bdf8">현재 ${slow}% → <strong>${afterN}%</strong> (풀이감 초과 유지)</span>`;
+    descN.innerHTML = `<span style="color: #38bdf8">현재 ${slow}% → <strong>${afterN}%</strong> (117% 몹 스폰존 완전 고정)</span>`;
+  }
+
+  // 새턴 (+10% 폭뎀증, 체젠 35만 억제, 아군 공증 30%)
+  if (descS) {
+    if (primaryType === 2) {
+      descS.innerHTML = `<span style="color: #a855f7">★마딜 특화: 폭뎀 10% 증폭 + 적 체젠 35만 억제 극대화</span>`;
+    } else {
+      descS.innerHTML = `<span style="color: #e2e8f0">아군 공증 30% + 적 체젠 35만 억제 (고체력 보스 녹이기)</span>`;
+    }
   }
 }
 

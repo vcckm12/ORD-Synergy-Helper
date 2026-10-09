@@ -142,8 +142,8 @@
 
         <!-- 오로성 직관 비교 토글 카드 -->
         <div class="gorosei-compare-card">
-          <h3>👑 오로성 선택 직관 비교 (워큐리 vs 나스쥬로)</h3>
-          <div class="gorosei-grid">
+          <h3>👑 오로성 3대 선택 직관 비교 (워큐리 vs 나스쥬로 vs 새턴)</h3>
+          <div class="gorosei-grid" style="grid-template-columns: repeat(3, 1fr);">
             <div class="gorosei-col" id="colWarcury">
               <div class="gorosei-title">워큐리 (+15깎)</div>
               <p class="gorosei-desc" id="descWarcury">방깎 보강</p>
@@ -153,6 +153,11 @@
               <div class="gorosei-title">나스쥬로 (+15이감)</div>
               <p class="gorosei-desc" id="descNusjuro">이감 캡 완성</p>
               <button class="btn-sm" onclick="toggleUnit('gorosei_nusjuro')">나스쥬로 적용/해제</button>
+            </div>
+            <div class="gorosei-col" id="colSaturn">
+              <div class="gorosei-title">새턴 (+10% 폭뎀/체젠)</div>
+              <p class="gorosei-desc" id="descSaturn">폭뎀/체젠 억제</p>
+              <button class="btn-sm" onclick="toggleUnit('gorosei_saturn')">새턴 적용/해제</button>
             </div>
           </div>
         </div>
