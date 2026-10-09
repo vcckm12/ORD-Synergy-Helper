@@ -156,6 +156,25 @@ function updateDashboardUI(data) {
     recListEl.innerHTML = '<div class="rec-empty">추천할 유닛이 없거나 이미 풀스펙입니다.</div>';
   }
 
+  // 4-1. 21라운드 항법 추천 렌더링
+  const navRecListEl = document.getElementById('navRecList');
+  if (navRecListEl && data.navigationRecommendations) {
+    navRecListEl.innerHTML = '';
+    data.navigationRecommendations.slice(0, 3).forEach(nr => {
+      const item = document.createElement('div');
+      item.className = 'nav-rec-item';
+      item.innerHTML = `
+        <div class="nav-title-row">
+          <span class="nav-name">👑 ${nr.style.name}</span>
+          <span class="nav-score">적합도 ${Math.round(nr.matchScore)}%</span>
+        </div>
+        <div class="nav-rationale">${nr.rationale}</div>
+        <div class="nav-tip">💡 팁: ${nr.practicalTip}</div>
+      `;
+      navRecListEl.appendChild(item);
+    });
+  }
+
   // 5. 현재 보유 덱 카드 태그 렌더링
   const currentDeckContainer = document.getElementById('currentDeckContainer');
   const deckCountEl = document.getElementById('deckCount');
